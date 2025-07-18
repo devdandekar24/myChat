@@ -1,0 +1,7 @@
+# I will be using django-cleanup to delete the duplicate files
+
+# to handle user log out allauth  package
+
+# making empty logged_in.txt and logged_out.txt allow to disable the notification texts
+
+# used django-htmx in settings in header
