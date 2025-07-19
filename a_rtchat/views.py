@@ -1,9 +1,11 @@
 from django.shortcuts import render, get_object_or_404,redirect
-from django.http import Http404
+from django.http import Http404,HttpResponse
 from .models import *
 from django.contrib.auth.decorators import login_required
 from .forms import *
 from django.contrib import messages
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
 
 @login_required
 def chat_view(request,chatroom_name = 'public-chat'):
@@ -158,3 +160,23 @@ def chatroom_leave_view(request, chatroom_name):
     return render(request, "a_rtchat/confirm_leave.html", {
         "chat_group": chat_group
     })
+    
+def chat_file_upload(request, chatroom_name):
+    chat_group = get_object_or_404(ChatGroup, group_name=chatroom_name)
+    
+    if request.htmx and request.FILES:
+        file = request.FILES['file']
+        message = GroupMessage.objects.create(
+            file = file,
+            author = request.user, 
+            group = chat_group,
+        )
+        channel_layer = get_channel_layer()
+        event = {
+            'type': 'message_handler',
+            'message_id': message.id,
+        }
+        async_to_sync(channel_layer.group_send)(
+            chatroom_name, event
+        )
+    return HttpResponse()
