@@ -75,5 +75,70 @@ class ChatroomConsumer(WebsocketConsumer):
         
     def online_count_handler(self, event):
         online_count = event['online_count']
-        html = render_to_string("a_rtchat/partials/online_count.html",{'online_count':online_count})
+        context={
+            'online_count':online_count,
+            'chat_group':self.chatroom,
+        }
+        html = render_to_string("a_rtchat/partials/online_count.html",context)
+        self.send(text_data=html)
+        
+class OnlineStatusConsumer(WebsocketConsumer):
+    def connect(self):
+        self.user = self.scope['user']
+        self.group_name = 'online-status'
+        self.group = get_object_or_404(ChatGroup, group_name=self.group_name)
+        
+        if self.user not in self.group.users_online.all():
+            self.group.users_online.add(self.user)
+            
+        async_to_sync(self.channel_layer.group_add)(
+            self.group_name, self.channel_name
+        )
+            
+        self.accept()
+        self.online_status()
+        
+    def disconnect(self, close_code):
+        self.group.users_online.remove(self.user)
+        
+        async_to_sync(self.channel_layer.group_discard)(
+            self.group_name, self.channel_name
+        )
+        
+        self.online_status()
+        
+    def online_status(self):
+        event={
+            'type':'online_status_handler'
+        }
+        async_to_sync(self.channel_layer.group_send)(
+            self.group_name, event
+        )
+        
+    def online_status_handler(self, event):
+        public_chat = ChatGroup.objects.get(group_name='public-chat')
+        public_chat_users = public_chat.users_online.exclude(id=self.user.id)
+
+        my_chats = self.user.chat_groups.all()
+
+        private_chats = []
+        for chat in my_chats.filter(is_private=True):
+            other_online = chat.users_online.exclude(id=self.user.id)
+            chat.online_count = other_online.count()
+            private_chats.append(chat)
+
+        group_chats = []
+        for chat in my_chats.filter(groupchat_name__isnull=False):
+            other_online = chat.users_online.exclude(id=self.user.id)
+            chat.online_count = other_online.count()
+            group_chats.append(chat)
+
+        context = {
+            'public_chat_users': public_chat_users,
+            'private_chats': private_chats,
+            'group_chats': group_chats,
+            'user': self.user
+        }
+
+        html = render_to_string("a_rtchat/partials/online_status.html", context=context)
         self.send(text_data=html)

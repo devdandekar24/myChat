@@ -10,6 +10,9 @@
         {% if profile.info %}
         <div class="mt-8">{{ profile.info|linebreaksbr }}</div>
         {% endif %}  
+        {% if profile.user != user %}
+        <a class="button" href="{% url 'start-chat' profile.user.username %}">Chat With me</a>
+        {% endif %}
     </div>
 </div>
 
