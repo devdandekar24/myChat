@@ -12,7 +12,7 @@
         }
     </style>
 </span>
-
+<!-- if some one is online then green dot else gray dot-->
 {% if online_count %}
 <div id="online-icon" class="green-dot absolute top-2 left-2 "></div>
 {% else %}
@@ -22,6 +22,7 @@
 <ul id="groupchat-members" class ="flex gap-4">
     {% for member in chat_group.members.all  %}
     <li>
+        <!-- Avatar and profile name on top of chats -->
         <a href="{% url 'profile' member.username %}" class="flex flex-col text-gray-400 items-center justify-center w-20 gap-2">
             <div class="relative">
                 {% if member in chat_group.users_online.all %}

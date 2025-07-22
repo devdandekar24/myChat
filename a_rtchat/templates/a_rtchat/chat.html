@@ -8,6 +8,7 @@
     <div class="flex justify-between">
     <h2>{{ chat_group.groupchat_name}}</h2>
     {% if user == chat_group.admin %}
+    {% comment %} Edit button {% endcomment %}
     <a href="{% url 'edit-chatroom' chat_group.group_name %}">
         <div class="p-2 bg-gray-200 hover:bg-blue-600 rounded-lg group">
             <svg class="fill-gray-500 group-hover:fill-white" width="16" height="16">
@@ -18,64 +19,102 @@
     {% endif %}
     </div>
     {% endif %}
+
+        <!-- Main chat window container -->
     <div id="chat_window" class="h-[45rem] flex flex-col bg-gray-800 rounded-2xl shadow-2xl relative p-1">
+
+        <!-- Header section: shows user info or group members -->
         <div class="flex justify-center text-emerald-400 bg-gray-800 p-2 sticky top-0 z-10">
+            
             {% if other_user %}
+            <!-- Online indicator for 1-on-1 chat -->
             <div id="online-icon" class="gray-dot absolute top-2 left-2"></div>
+
+            <!-- Link to other user's profile -->
             <a href="{% url 'profile' other_user.username %}">
                 <div class="flex items-center gap-2 p-4 sticky top-0 z-10">
+                    <!-- Other user's profile picture -->
                     <img class="w-10 h-10 rounded-full object-cover" src="{{ other_user.profile.avatar }}" />
                     <div>
-                        <span class="font-bold text-white">{{ other_user.profile.name }}</span> 
+                        <!-- Username display -->
+                        {% comment %} <span class="font-bold text-white">{{ other_user.profile.name }}</span>  {% endcomment %}
                         <span class="text-sm font-light text-gray-400">@{{ other_user.username }}</span>
                     </div>
                 </div>
             </a>
+
             {% elif chat_group.groupchat_name %}
-            <ul id="groupchat-members" class ="flex gap-4">
-                {% for member in chat_group.members.all  %}
+            <!-- Group chat case: show list of all members -->
+            <ul id="groupchat-members" class="flex gap-4">
+                {% for member in chat_group.members.all %}
                 <li>
+                    <!-- Each member links to their profile -->
                     <a href="{% url 'profile' member.username %}" class="flex flex-col text-gray-400 items-center justify-center w-20 gap-2">
-                        <img src="{{ member.profile.avatar}}" class="w-14 h-14 rounded-full object-cover">
-                        {{ member.profile.name|slice:":10"}}
+                        <!-- Member avatar -->
+                        <img src="{{ member.profile.avatar }}" class="w-14 h-14 rounded-full object-cover">
+                        <!-- Truncated name (max 10 chars) -->
+                        {{ member.profile.name|slice:":10" }}
                     </a>
                 </li>
                 {% endfor %}
             </ul>
+
             {% else %}
+            <!-- Fallback: show online status/count for public chat -->
             <div id="online-icon"></div>
             <span id="online-count" class="pr-1"></span>online
             {% endif %}
         </div>
-        <div id='chat_container' class="overflow-y-auto grow">
-            <ul id='chat_messages' class="flex flex-col justify-end gap-2 p-4">
-                {% for message in chat_messages reversed%}
+
+        <!-- Chat messages container -->
+        <div id="chat_container" class="overflow-y-auto grow">
+            <!-- List of chat messages -->
+            <ul id="chat_messages" class="flex flex-col justify-end gap-2 p-4">
+                {% for message in chat_messages reversed %}
+                <!-- Include each message from a separate template -->
                 {% include 'a_rtchat/chat_message.html' %}
                 {% endfor %}
             </ul>
         </div>
+
+        <!-- Sticky message input area pinned to bottom of chat window -->
         <div class="sticky bottom-0 z-10 p-2 bg-gray-800">
+
+            <!-- Container for forms (message + file), vertically stacked -->
             <div class="flex flex-col gap-4 items-center rounded-xl px-2 py-2">
+
+                <!-- Chat message form using HTMX and WebSocket -->
                 <form id="chat_message_form" class="w-full"
-                    hx-ext="ws"
-                    ws-connect="/ws/chatroom/{{ chatroom_name}}"
-                    ws-send
-                    _="on htmx:wsAfterSend reset() me">
-                    {% csrf_token %}
-                    {{ form }}  
+                    hx-ext="ws"  
+                    ws-connect="/ws/chatroom/{{ chatroom_name}}"  
+                    ws-send 
+                    _="on htmx:wsAfterSend reset() me"> <!-- Reset form after message is sent -->
+                    <!-- ws-connect : sets up the WebSocket connection URL (like ws://...) to the server for this chat room -->
+                    {% csrf_token %}  <!-- Django CSRF protection -->
+                    {{ form }}        <!-- Renders the form field(s) -->
                 </form>
+
+                <!-- File upload form (e.g. images, documents) using HTMX -->
                 <form id="chat_file_form" enctype="multipart/form-data" class="flex items-center w-full" 
-                    hx-post="{% url 'chat-file-upload' chat_group.group_name %}"
-                    hx-target="#chat_messages"
-                    hx-swap="beforeend" 
-                    _="on htmx:beforeSend reset() me" >
-                    {% csrf_token %}
+                    hx-post="{% url 'chat-file-upload' chat_group.group_name %}"  
+                    hx-target="#chat_messages"    
+                    hx-swap="beforeend"           
+                    _="on htmx:beforeSend reset() me"> <!-- Reset form before sending file -->
+
+                    {% csrf_token %} 
+
+                    <!-- File input with transparent background and styled text -->
                     <input type="file" name="file" id="id_file" class="!bg-transparent text-gray-400">
+
+                    <!-- Submit button for file upload -->
                     <button type="submit" class="whitespace-nowrap !text-sm !py-3 !px-4 h-fit">Submit File</button>
                 </form>
             </div>
         </div>
+
+
     </div>
+    <!-- if user is member of chat group them he can leave the chat group -->
     {% if chat_group.members.exists %}
     <a href="{% url 'chatroom-leave' chat_group.group_name %}">Leave Chat</a>
     {% endif %}
@@ -93,4 +132,18 @@
     }
     scrollToBottom()
 </script>
+
+<script>
+document.addEventListener("htmx:wsConfigSend", function (e) {
+    const body = e.detail.parameters.body;
+
+    if (!body || body.trim() === "") {
+        console.log("Blocked empty or whitespace-only message");
+        e.preventDefault(); // This blocks the WebSocket send
+    }
+});
+</script>
+
+
+
 {% endblock %}

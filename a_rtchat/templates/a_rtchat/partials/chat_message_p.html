@@ -1,3 +1,8 @@
+<!-- 
+  This container holds a newly added chat message.
+  It uses HTMX Out-of-Band (OOB) swapping to append this message
+  to the main #chat_messages list in the DOM.
+-->
 <div id="chat_messages" hx-swap-oob="beforeend"> 
 
 {% include "a_rtchat/chat_message.html" %}

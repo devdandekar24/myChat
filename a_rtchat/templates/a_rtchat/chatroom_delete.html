@@ -10,6 +10,7 @@
     {% csrf_token %}
     <button type="submit" class="button-red mt-4">Yes, delete</button>
     <a class="button button-gray ml-1" href="{{ request.META.HTTP_REFERER }}">Cancel</a>
+    <!-- request.META['HTTP_REFERER'] in Django gives you the URL of the page the user came from -->
 </form>
 
 {% endblock %}

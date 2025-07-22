@@ -1,7 +1,11 @@
 from django.forms import ModelForm
 from django import forms
 from .models import *
+from emoji_picker.widgets import EmojiPickerTextInputAdmin
 
+
+# widgets dictonary in Meta class customizes how form fields are rendered in html
+# the Meta class links the form to a model and specifies which fields to include and how they should be displayed.
 class ChatmessageCreateForm(ModelForm):
     class Meta:
         model = GroupMessage

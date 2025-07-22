@@ -12,6 +12,8 @@
         {% endif %}  
         {% if profile.user != user %}
         <a class="button" href="{% url 'start-chat' profile.user.username %}">Chat With me</a>
+        {% else %}
+        <a class="button" href="{% url 'start-chat' user.username %}">Message Yourself</a>
         {% endif %}
     </div>
 </div>

@@ -1,9 +1,16 @@
 {% if message.body %}
-    <span>{{message.body}}</span>        
+    <!-- Use <div> with responsive wrapping and padding -->
+    <!-- makes sure that long messages dont go outside the box -->
+    <div class="break-words text-black leading-snug">
+        {{ message.body }}
+    </div>
 {% elif message.file %}
     {% if message.is_image %}
-        <img src="{{message.file.url}}" alt="Loading..." class="max-w-72 min-w-8">
+        <img src="{{ message.file.url }}" alt="Loading..." class="max-w-72 min-w-8">
     {% else %}
-        &#x1F4CE;<a href="{{message.file.url}}" class="cursor-pointer italic hover:underline" download>{{message.filename}}</a>
+        &#x1F4CE;
+        <a href="{{ message.file.url }}" class="cursor-pointer italic hover:underline" download>
+            {{ message.filename }}
+        </a>
     {% endif %}
 {% endif %}
