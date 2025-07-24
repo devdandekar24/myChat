@@ -9,9 +9,15 @@ from asgiref.sync import async_to_sync
 
 @login_required
 def chat_view(request,chatroom_name = 'public-chat'):
+    print("HTMX?", request.htmx)
+
     # chat_group = get_object_or_404(ChatGroup, group_name =chatroom_name)
     chat_group, created = ChatGroup.objects.get_or_create(group_name=chatroom_name)
 
+    # if request.user in chat_group.blocked_members.all():
+    #     messages.error(request, "You are blocked from this chatroom.")
+    #     return redirect('home')
+    
     chat_messages=chat_group.chat_messages.all()[:30]
     form=ChatmessageCreateForm()
     
@@ -28,6 +34,18 @@ def chat_view(request,chatroom_name = 'public-chat'):
     # join chat using url ( only for verified users)
     if chat_group.groupchat_name:
         if request.user not in chat_group.members.all():
+            # 
+            # If removed from chat, redirect
+            if request.user in chat_group.removed_members.all():
+                messages.info(request,f"You are removed from {chat_group.groupchat_name}.")
+                chat_group.removed_members.remove(request.user)
+                return redirect('home')
+            
+            # below code works nice
+            if request.user in chat_group.blocked_members.all():
+                messages.error(request, f"You are blocked from {chat_group.groupchat_name} chatroom.")
+                return redirect('home')
+            # 
             if request.user.emailaddress_set.filter(verified=True).exists():
                 chat_group.members.add(request.user)
             else:
@@ -131,11 +149,29 @@ def chatroom_edit_view(request, chatroom_name):
         form = ChatRoomEditForm(request.POST, instance=chat_group)
         if form.is_valid():
             form.save()
+            # 
+            # multiselect checkboxes # Block selected members
+            # blocking also means removing member from group
+            block_members = request.POST.getlist('block_members')
+            for member_id in block_members:
+                member = User.objects.get(id=member_id)
+                chat_group.blocked_members.add(member)
+                if member in chat_group.members.all():
+                    chat_group.members.remove(member)
+
+            # Unblock selected members
+            unblock_members = request.POST.getlist('unblock_members')
+            for member_id in unblock_members:
+                member = User.objects.get(id=member_id)
+                chat_group.blocked_members.remove(member) 
+                
             # form has a multi-select or checkboxes with name remove_members
             remove_members = request.POST.getlist('remove_members')
             for member_id in remove_members:
                 member = User.objects.get(id=member_id)
-                chat_group.members.remove(member)  
+                chat_group.removed_members.add(member)
+                if member in chat_group.members.all():
+                    chat_group.members.remove(member) 
                 
             return redirect('chatroom', chatroom_name) 
         
@@ -144,7 +180,9 @@ def chatroom_edit_view(request, chatroom_name):
             # also update chatroom_edit.html
     context = {
         'form' : form,
-        'chat_group' : chat_group
+        'chat_group' : chat_group,
+        # 'members': chat_group.members.all(),
+        # 'blocked_members': chat_group.blocked_members.all()
     }   
     return render(request, 'a_rtchat/chatroom_edit.html', context)
 
@@ -204,3 +242,8 @@ def chat_file_upload(request, chatroom_name):
             chatroom_name, event
         )
     return HttpResponse()
+
+
+
+
+

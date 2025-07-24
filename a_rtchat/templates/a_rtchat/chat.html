@@ -111,8 +111,6 @@
                 </form>
             </div>
         </div>
-
-
     </div>
     <!-- if user is member of chat group them he can leave the chat group -->
     {% if chat_group.members.exists %}
@@ -143,7 +141,5 @@ document.addEventListener("htmx:wsConfigSend", function (e) {
     }
 });
 </script>
-
-
 
 {% endblock %}

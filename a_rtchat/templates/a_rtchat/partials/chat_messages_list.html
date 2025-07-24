@@ -1,0 +1,15 @@
+{% for message in chat_messages reversed %}
+    {% include "a_rtchat/chat_message.html" %}
+{% endfor %}
+
+{% if chat_messages.has_next %}
+    <div 
+        id="load_more_trigger"
+        hx-get="{% url 'chatroom' chatroom_name %}?page={{ chat_messages.next_page_number }}"
+        hx-target="#scroll_anchor"
+        hx-swap="beforebegin"
+        hx-trigger="revealed"
+    >
+        Loading more...
+    </div>
+{% endif %}

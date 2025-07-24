@@ -38,28 +38,6 @@
 </ul>
 
 <ul id="private-chats-list" class="hoverlist">
-    <!-- private chats from consumers.py -->
-    {% comment %} {% for chat in private_chats %}
-        {% for member in chat.members.all %}
-            {% if member != user %}
-                <li class="relative">
-                    {% if chat.online_count > 0 %}
-                        <div class="green-dot absolute top-1 left-1"></div>
-                    {% else %}
-                        <div class="graylight-dot absolute top-1 left-1"></div>
-                    {% endif %}
-                    <a href="{% url 'chatroom' chat.group_name %}">{{ member.profile.name }}</a>
-                </li>
-            <!-- Trial-->
-            {% else %}
-                <li class="relative">
-                    <a href="{% url 'chatroom' chat.group_name %}">Me</a>
-                </li>
-            <!-- Trial ends-->
-            {% endif %}
-        {% endfor %}
-    {% endfor %} {% endcomment %}
-
     <!-- Trial 2 ( works )-->
     {% for chat in private_chats %}
         {% with chat.members.all|length as member_count %}

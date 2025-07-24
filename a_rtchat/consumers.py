@@ -5,6 +5,12 @@ from asgiref.sync import async_to_sync
 from .models import *
 import json
 
+# for encryption
+from cryptography.fernet import Fernet
+from django.conf import settings
+
+f = Fernet(settings.ENCRYPT_KEY)
+
 # channels on serverside and websockets in client-side
 # The channel layer is a message bus system (like a post office) that lets different parts of your application talk to each other.
 # group_add(group_name, channel_name): subscribes a specific connection
@@ -20,6 +26,21 @@ class ChatroomConsumer(WebsocketConsumer):
         self.chatroom_name = self.scope['url_route']['kwargs']['chatroom_name'] 
         # fetches chatgroup instance from databse
         self.chatroom = get_object_or_404(ChatGroup, group_name=self.chatroom_name)
+        
+        # deny if removed
+        # ✅ Check if blocked first (important!)
+        if self.chatroom.group_name != "public-chat" and self.user in self.chatroom.blocked_members.all():
+            # print("User is blocked from this chatroom.")
+            self.close()
+            return
+
+        # Allow anyone in public chat but removed members not
+        if self.chatroom.group_name != "public-chat" and self.user in self.chatroom.removed_members.all():
+            # print("User is not a member of this chatroom.")
+            self.close()
+            return
+
+
         # async_to_sync :  special wrapper function that acts as a bridge from the synchronous world to the asynchronous world
         # self.channel_layer.group_add : tell the channel layer, "Please add the current user's connection (self.channel_name) to the group named self.chatroom_name
         async_to_sync(self.channel_layer.group_add)(
@@ -51,12 +72,30 @@ class ChatroomConsumer(WebsocketConsumer):
         # takes incoming data and extracts the message body
         #  converts the JSON string into a Python dictionary
         # pls note htmx does not send JSON by default but , When used with ws-send, HTMX actually serializes the form into JSON — not classic x-www-form-urlencoded
+        
+        # ✅ Check if blocked first (important!)
+        if self.chatroom.group_name != "public-chat" and self.user in self.chatroom.blocked_members.all():
+            # print("User is blocked from this chatroom.")
+            self.close()
+            return
+
+        # Allow anyone in public chat but removed members not
+        if self.chatroom.group_name != "public-chat" and self.user in self.chatroom.removed_members.all():
+            # print("User is not a member of this chatroom.")
+            self.close()
+            return
+
+        
         text_data_json = json.loads(text_data)
         # extract the actual message
         body = text_data_json['body']
+        # encryption
+        encrypted_body = f.encrypt(body.encode('utf-8')).decode('utf-8')
+        
         # saves message to the database
         message = GroupMessage.objects.create(
-            body = body,
+            # body = body,
+            body=encrypted_body,
             author = self.user, 
             group = self.chatroom 
         )

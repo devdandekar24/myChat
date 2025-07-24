@@ -2,7 +2,7 @@
     <!-- Use <div> with responsive wrapping and padding -->
     <!-- makes sure that long messages dont go outside the box -->
     <div class="break-words text-black leading-snug">
-        {{ message.body }}
+        {{ message.body_decrypted }}
     </div>
 {% elif message.file %}
     {% if message.is_image %}

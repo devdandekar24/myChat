@@ -3,6 +3,8 @@ from django.contrib.auth.models import User
 import shortuuid
 import os
 from PIL import Image
+from django.conf import settings
+from cryptography.fernet import Fernet
 
 class ChatGroup(models.Model):
     group_name = models.CharField(max_length=128, unique= True,default=shortuuid.uuid)
@@ -12,6 +14,9 @@ class ChatGroup(models.Model):
     users_online = models.ManyToManyField(User,related_name='online_in_groups',blank=True)
     members = models.ManyToManyField(User, related_name='chat_groups',blank=True)
     is_private = models.BooleanField(default=False)
+    # 
+    blocked_members = models.ManyToManyField(User, related_name='blocked_groups', blank=True)
+    removed_members = models.ManyToManyField(User, related_name='removed_groups',blank=True)
     
     def __str__(self):
         return self.group_name
@@ -52,3 +57,10 @@ class GroupMessage(models.Model):
         elif self.file:
             return f'{self.author.username} : {self.filename}'
         return f'{self.author.username} : [Empty message]'
+    
+    @property
+    def body_decrypted(self):
+        f= Fernet(settings.ENCRYPT_KEY)
+        message_decrypted = f.decrypt(self.body)
+        message_decoded = message_decrypted.decode('utf-8')
+        return message_decoded
