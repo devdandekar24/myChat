@@ -22,7 +22,9 @@ else:
     DEBUG = False
     
 # until we have live domain we use asterisk in allowed hosts 
-ALLOWED_HOSTS = ['localhost','127.0.0.1','*']
+ALLOWED_HOSTS = ['localhost','127.0.0.1','mychat-fg9w.onrender.com']
+
+CSRF_TRUSTED_ORIGINS = [ 'https://mychat-fg9w.onrender.com' ]
 
 INTERNAL_IPS = (
     '127.0.0.1',
