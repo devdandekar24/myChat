@@ -2,7 +2,8 @@ from pathlib import Path
 
 from environ import Env
 env=Env()
-Env.read_env()
+# Env.read_env()
+env.read_env()
 
 ENVIRONMENT = env('ENVIRONMENT',default="production")
 
@@ -16,10 +17,10 @@ SECRET_KEY = env('SECRET_KEY')
 
 ENCRYPT_KEY = env('ENCRYPT_KEY').encode()
 
-# if ENVIRONMENT == 'development':
-DEBUG = True
-# else:
-#     DEBUG = False
+if ENVIRONMENT == 'development':
+    DEBUG = True
+else:
+    DEBUG = False
     
 # until we have live domain we use asterisk in allowed hosts 
 ALLOWED_HOSTS = ['localhost','127.0.0.1','mychat-fg9w.onrender.com']
@@ -115,30 +116,22 @@ else:
         },
     }
 
-# CHANNEL_LAYERS = {
-#     "default": {
-#         "BACKEND": "channels_redis.core.RedisChannelLayer",
-#         "CONFIG": {
-#             "hosts": [("localhost", 6379)],
-#         },
-#     },
-# }
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-if ENVIRONMENT == 'development':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': BASE_DIR / 'db.sqlite3',
-        }
-    }
-else:
-    import dj_database_url
-    DATABASES = {
-        'default':dj_database_url.parse(env('DATABASE_URL'))
-    }
+# if ENVIRONMENT == 'development':
+#     DATABASES = {
+#         'default': {
+#             'ENGINE': 'django.db.backends.sqlite3',
+#             'NAME': BASE_DIR / 'db.sqlite3',
+#         }
+#     }
+# else:
+import dj_database_url
+DATABASES = {
+    'default':dj_database_url.parse(env('DATABASE_URL'))
+}
 
 
 # Password validation
@@ -216,7 +209,9 @@ else:
     DEFAULT_FROM_EMAIL = f'Awesomechat {env("EMAIL_ADDRESS")}'
     ACCOUNT_EMAIL_SUBJECT_PREFIX= ''
     
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-
-ACCOUNT_EMAIL_REQUIRED = True
+    
+# ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_LOGIN_METHODS = {"email"}
+ACCOUNT_SIGNUP_FIELDS = ["email*", "username*", "password1*", "password2*"]
+# ACCOUNT_EMAIL_REQUIRED = True
 
