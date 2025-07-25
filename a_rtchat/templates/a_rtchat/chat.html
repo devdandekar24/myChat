@@ -113,8 +113,10 @@
         </div>
     </div>
     <!-- if user is member of chat group them he can leave the chat group -->
-    {% if chat_group.members.exists %}
+    {% if chat_group.is_private %}
+    {% elif chat_group.members.exists %}
     <a href="{% url 'chatroom-leave' chat_group.group_name %}">Leave Chat</a>
+    {% comment %} {% if chat_group.members.exists%} {% endcomment %}
     {% endif %}
 </wrapper>
 

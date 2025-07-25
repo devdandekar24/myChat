@@ -1,22 +1,35 @@
 from pathlib import Path
 
+from environ import Env
+env=Env()
+Env.read_env()
+
+ENVIRONMENT = env('ENVIRONMENT',default="production")
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-# Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-m3b^9mm6bn2a+vz-34-_crszy6&2lz3n0g#se0ax#qlypvy-35'
+SECRET_KEY = env('SECRET_KEY')
 
-ENCRYPT_KEY = b'm-9V8HWRx6UDe99HvFGAC8WYzx5EO3msZJJx8HOG88s='
+ENCRYPT_KEY = env('ENCRYPT_KEY').encode()
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+if ENVIRONMENT == 'development':
+    DEBUG = True
+else:
+    DEBUG = False
+    
+# until we have live domain we use asterisk in allowed hosts 
+ALLOWED_HOSTS = ['localhost','127.0.0.1','*']
+
+INTERNAL_IPS = (
+    '127.0.0.1',
+    'localhost:8000'
+)
 # for 404 page: DEBUG =FALSE and ALLOWED_HOSTS=['localhost','127.0.0.1','*']
 # ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -29,7 +42,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'django_cleanup.apps.CleanupConfig',
+    'cloudinary_storage',
+    'cloudinary',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -39,8 +55,11 @@ INSTALLED_APPS = [
     'a_rtchat',
 ]
 
+SITE_ID = 1
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -78,11 +97,21 @@ TEMPLATES = [
 # WSGI_APPLICATION = 'a_core.wsgi.application'
 ASGI_APPLICATION = 'a_core.asgi.application'
 
-CHANNEL_LAYERS = {
-    'default':{
-        "BACKEND":"channels.layers.InMemoryChannelLayer",
+if ENVIRONMENT =='development':
+    CHANNEL_LAYERS = {
+        'default':{
+            "BACKEND":"channels.layers.InMemoryChannelLayer",
+        }
     }
-}
+else:
+    CHANNEL_LAYERS = {
+        'default':{
+            "BACKEND":"channels_redis.core.RedisChannelLayer",
+            "CONFIG":{
+                "hosts":[(env('REDIS_URL'))],
+            },
+        },
+    }
 
 # CHANNEL_LAYERS = {
 #     "default": {
@@ -96,12 +125,18 @@ CHANNEL_LAYERS = {
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+if ENVIRONMENT == 'development':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
     }
-}
+else:
+    import dj_database_url
+    DATABASES = {
+        'default':dj_database_url.parse(env('DATABASE_URL'))
+    }
 
 
 # Password validation
@@ -140,9 +175,25 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [ BASE_DIR / 'static' ]
+STATIC_ROOT =BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+if ENVIRONMENT == 'development':
+    MEDIA_ROOT = BASE_DIR / 'media'
+else:
+    STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+        },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
+        },
+    }
+    CLOUDINARY_STORAGE ={
+        'CLOUDINARY_URL':env('CLOUDINARY_URL')
+    }
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -151,7 +202,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/'
 
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+if ENVIRONMENT == 'development':
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.gmail.com'
+    EMAIL_HOST_USER = env('EMAIL_ADDRESS')
+    EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+    DEFAULT_FROM_EMAIL = f'Awesomechat {env("EMAIL_ADDRESS")}'
+    ACCOUNT_EMAIL_SUBJECT_PREFIX= ''
+    
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 
 ACCOUNT_EMAIL_REQUIRED = True

@@ -1,13 +1,14 @@
-from channels.generic.websocket import WebsocketConsumer
-from django.shortcuts import get_object_or_404
-from django.template.loader import render_to_string
-from asgiref.sync import async_to_sync
-from .models import *
 import json
 
+from asgiref.sync import async_to_sync
+from channels.generic.websocket import WebsocketConsumer
 # for encryption
 from cryptography.fernet import Fernet
 from django.conf import settings
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
+
+from .models import *
 
 f = Fernet(settings.ENCRYPT_KEY)
 
@@ -28,7 +29,7 @@ class ChatroomConsumer(WebsocketConsumer):
         self.chatroom = get_object_or_404(ChatGroup, group_name=self.chatroom_name)
         
         # deny if removed
-        # ✅ Check if blocked first (important!)
+        # Check if blocked first 
         if self.chatroom.group_name != "public-chat" and self.user in self.chatroom.blocked_members.all():
             # print("User is blocked from this chatroom.")
             self.close()
@@ -73,7 +74,7 @@ class ChatroomConsumer(WebsocketConsumer):
         #  converts the JSON string into a Python dictionary
         # pls note htmx does not send JSON by default but , When used with ws-send, HTMX actually serializes the form into JSON — not classic x-www-form-urlencoded
         
-        # ✅ Check if blocked first (important!)
+        # Check if blocked first (important!)
         if self.chatroom.group_name != "public-chat" and self.user in self.chatroom.blocked_members.all():
             # print("User is blocked from this chatroom.")
             self.close()
@@ -216,31 +217,3 @@ class OnlineStatusConsumer(WebsocketConsumer):
         # Sends it to the client over WebSocket
         html = render_to_string("a_rtchat/partials/online_status.html", context=context)
         self.send(text_data=html)
-    
-    # def online_status_handler(self, event):
-    #     public_chat = ChatGroup.objects.get(group_name='public-chat')
-    #     public_chat_users = public_chat.users_online.exclude(id=self.user.id)
-
-    #     my_chats = self.user.chat_groups.all()
-
-    #     private_chats = []
-    #     group_chats = []
-
-    #     for chat in my_chats:
-    #         other_online = chat.users_online.exclude(id=self.user.id)
-    #         chat.online_count = other_online.count()
-
-    #         if chat.groupchat_name == "Me" or chat.is_private:
-    #             private_chats.append(chat)
-    #         elif chat.groupchat_name:
-    #             group_chats.append(chat)
-
-    #     context = {
-    #         'public_chat_users': public_chat_users,
-    #         'private_chats': private_chats,
-    #         'group_chats': group_chats,
-    #         'user': self.user
-    #     }
-
-    #     html = render_to_string("a_rtchat/partials/online_status.html", context=context)
-    #     self.send(text_data=html)

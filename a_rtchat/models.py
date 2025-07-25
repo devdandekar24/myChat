@@ -1,13 +1,16 @@
-from django.db import models
-from django.contrib.auth.models import User
-import shortuuid
 import os
-from PIL import Image
-from django.conf import settings
+
+import shortuuid
 from cryptography.fernet import Fernet
+from django.conf import settings
+from django.contrib.auth.models import User
+from django.db import models
+from PIL import Image
+
 
 class ChatGroup(models.Model):
-    group_name = models.CharField(max_length=128, unique= True,default=shortuuid.uuid)
+    # group_name = models.CharField(max_length=128, unique= True,default=shortuuid.uuid)
+    group_name = models.CharField(max_length=128, unique= True,blank=True)
     groupchat_name = models.CharField(max_length=128, null=True, blank=True)
     admin = models.ForeignKey(User, related_name='groupchats', blank=True, null=True, on_delete=models.SET_NULL)
     # users who are online ( used in consumers.py )
@@ -20,6 +23,11 @@ class ChatGroup(models.Model):
     
     def __str__(self):
         return self.group_name
+    
+    def save(self, *args, **kwargs):
+        if not self.group_name:
+            self.groupp_name=shortuuid.uuid()
+        super().save(*args,**kwargs)
     
 class GroupMessage(models.Model):
     group = models.ForeignKey(ChatGroup, related_name='chat_messages', on_delete=models.CASCADE)

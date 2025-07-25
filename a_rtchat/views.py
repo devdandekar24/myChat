@@ -1,22 +1,19 @@
-from django.shortcuts import render, get_object_or_404,redirect
-from django.http import Http404,HttpResponse
-from .models import *
-from django.contrib.auth.decorators import login_required
-from .forms import *
-from django.contrib import messages
-from channels.layers import get_channel_layer
 from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.http import Http404, HttpResponse
+from django.shortcuts import get_object_or_404, redirect, render
+
+from .forms import *
+from .models import *
+
 
 @login_required
 def chat_view(request,chatroom_name = 'public-chat'):
-    print("HTMX?", request.htmx)
 
     # chat_group = get_object_or_404(ChatGroup, group_name =chatroom_name)
     chat_group, created = ChatGroup.objects.get_or_create(group_name=chatroom_name)
-
-    # if request.user in chat_group.blocked_members.all():
-    #     messages.error(request, "You are blocked from this chatroom.")
-    #     return redirect('home')
     
     chat_messages=chat_group.chat_messages.all()[:30]
     form=ChatmessageCreateForm()
@@ -181,8 +178,6 @@ def chatroom_edit_view(request, chatroom_name):
     context = {
         'form' : form,
         'chat_group' : chat_group,
-        # 'members': chat_group.members.all(),
-        # 'blocked_members': chat_group.blocked_members.all()
     }   
     return render(request, 'a_rtchat/chatroom_edit.html', context)
 
