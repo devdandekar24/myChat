@@ -17,10 +17,10 @@ SECRET_KEY = env('SECRET_KEY')
 
 ENCRYPT_KEY = env('ENCRYPT_KEY').encode()
 
-# if ENVIRONMENT == 'development':
-DEBUG = True
-# else:
-    # DEBUG = False
+if ENVIRONMENT == 'development':
+    DEBUG = True
+else:
+    DEBUG = False
     
 # until we have live domain we use asterisk in allowed hosts 
 ALLOWED_HOSTS = ['localhost','127.0.0.1','mychat-fg9w.onrender.com']
