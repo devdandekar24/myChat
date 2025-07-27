@@ -17,7 +17,8 @@ A modern real-time chat application built with Django, ASGI, and HTMX — featur
 - 🌐 **Deployed on Render**  
 - 💅 **Tailwind CSS** for styling  
 - 🧹 **Automatic File Cleanup** using `django-cleanup`  
-- 🔁 **Redis-backed Channel Layers** for production  
+- 🔁 **Redis-backed Channel Layers** for production
+- ㊙️ **Messages are encrypted using cryptography**
 - ⚡ Minimal HTMX Integration (dynamic interactivity)  
 
 ---
@@ -59,7 +60,7 @@ This app is deployed on **Render** and uses:
 
 For questions, ideas, or collaboration:
 - GitHub: [@devdandekar24](https://github.com/devdandekar24)
-
+- Linkedin: [@devdandekar](https://www.linkedin.com/in/dev-dandekar)
 ---
 
 > _Built with 💻 Django, ⚡ ASGI, and a lot of learning._
