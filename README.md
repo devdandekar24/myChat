@@ -55,6 +55,9 @@ This app is deployed on **Render** and uses:
 - Deploying Django projects on Render with environment variables  
 
 ---
+## Demo
+[youtube](https://youtu.be/0NzLcS1XeYY)
+---
 
 ## 📬 Contact
 
