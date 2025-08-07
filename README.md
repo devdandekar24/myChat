@@ -56,7 +56,7 @@ This app is deployed on **Render** and uses:
 
 ---
 ## Demo
-[youtube](https://youtu.be/0NzLcS1XeYY)
+[Demo video](https://youtu.be/0NzLcS1XeYY)
 ---
 
 ## 📬 Contact
